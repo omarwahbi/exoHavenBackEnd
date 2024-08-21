@@ -832,12 +832,7 @@ export interface ApiCategoryCategory extends Schema.CollectionType {
   attributes: {
     name: Attribute.String;
     img_url: Attribute.String;
-    text: Attribute.String;
-    sub_categories: Attribute.Relation<
-      'api::category.category',
-      'oneToMany',
-      'api::sub-category.sub-category'
-    >;
+    desc: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -861,7 +856,7 @@ export interface ApiImageImage extends Schema.CollectionType {
   info: {
     singularName: 'image';
     pluralName: 'images';
-    displayName: 'image';
+    displayName: 'images';
     description: '';
   };
   options: {
@@ -869,8 +864,8 @@ export interface ApiImageImage extends Schema.CollectionType {
   };
   attributes: {
     img_url: Attribute.String;
-    item: Attribute.Relation<'api::image.image', 'manyToOne', 'api::item.item'>;
     name: Attribute.String;
+    item: Attribute.Relation<'api::image.image', 'manyToOne', 'api::item.item'>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -904,12 +899,17 @@ export interface ApiItemItem extends Schema.CollectionType {
     name: Attribute.String;
     description: Attribute.Text;
     image: Attribute.String;
+    state: Attribute.String;
     sub_category: Attribute.Relation<
       'api::item.item',
-      'manyToOne',
+      'oneToOne',
       'api::sub-category.sub-category'
     >;
-    state: Attribute.String;
+    category: Attribute.Relation<
+      'api::item.item',
+      'oneToOne',
+      'api::category.category'
+    >;
     images: Attribute.Relation<
       'api::item.item',
       'oneToMany',
@@ -931,6 +931,7 @@ export interface ApiSubCategorySubCategory extends Schema.CollectionType {
     singularName: 'sub-category';
     pluralName: 'sub-categories';
     displayName: 'subCategory';
+    description: '';
   };
   options: {
     draftAndPublish: true;
@@ -939,13 +940,8 @@ export interface ApiSubCategorySubCategory extends Schema.CollectionType {
     name: Attribute.String;
     category: Attribute.Relation<
       'api::sub-category.sub-category',
-      'manyToOne',
+      'oneToOne',
       'api::category.category'
-    >;
-    items: Attribute.Relation<
-      'api::sub-category.sub-category',
-      'oneToMany',
-      'api::item.item'
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;

@@ -4,7 +4,7 @@
   "info": {
     "singularName": "image",
     "pluralName": "images",
-    "displayName": "image",
+    "displayName": "images",
     "description": ""
   },
   "options": {
@@ -15,14 +15,14 @@
     "img_url": {
       "type": "string"
     },
+    "name": {
+      "type": "string"
+    },
     "item": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::item.item",
       "inversedBy": "images"
-    },
-    "name": {
-      "type": "string"
     }
   }
 }

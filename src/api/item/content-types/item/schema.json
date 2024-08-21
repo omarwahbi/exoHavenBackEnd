@@ -21,14 +21,18 @@
     "image": {
       "type": "string"
     },
-    "sub_category": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::sub-category.sub-category",
-      "inversedBy": "items"
-    },
     "state": {
       "type": "string"
+    },
+    "sub_category": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::sub-category.sub-category"
+    },
+    "category": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::category.category"
     },
     "images": {
       "type": "relation",

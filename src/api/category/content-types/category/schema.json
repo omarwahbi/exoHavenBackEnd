@@ -18,14 +18,8 @@
     "img_url": {
       "type": "string"
     },
-    "text": {
+    "desc": {
       "type": "string"
-    },
-    "sub_categories": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::sub-category.sub-category",
-      "mappedBy": "category"
     }
   }
 }
