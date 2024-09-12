@@ -788,36 +788,6 @@ export interface PluginI18NLocale extends Schema.CollectionType {
   };
 }
 
-export interface ApiCarouselCarousel extends Schema.CollectionType {
-  collectionName: 'carousels';
-  info: {
-    singularName: 'carousel';
-    pluralName: 'carousels';
-    displayName: 'carousel ';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    img_url: Attribute.String;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    publishedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::carousel.carousel',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::carousel.carousel',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
 export interface ApiCategoryCategory extends Schema.CollectionType {
   collectionName: 'categories';
   info: {
@@ -833,6 +803,11 @@ export interface ApiCategoryCategory extends Schema.CollectionType {
     name: Attribute.String;
     img_url: Attribute.String;
     desc: Attribute.String;
+    sub_categories: Attribute.Relation<
+      'api::category.category',
+      'oneToMany',
+      'api::sub-category.sub-category'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -915,6 +890,8 @@ export interface ApiItemItem extends Schema.CollectionType {
       'oneToMany',
       'api::image.image'
     >;
+    new_arrival: Attribute.Boolean;
+    out_of_stock: Attribute.Boolean & Attribute.DefaultTo<false>;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -940,9 +917,10 @@ export interface ApiSubCategorySubCategory extends Schema.CollectionType {
     name: Attribute.String;
     category: Attribute.Relation<
       'api::sub-category.sub-category',
-      'oneToOne',
+      'manyToOne',
       'api::category.category'
     >;
+    subcategory_img: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -979,7 +957,6 @@ declare module '@strapi/types' {
       'plugin::users-permissions.role': PluginUsersPermissionsRole;
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
       'plugin::i18n.locale': PluginI18NLocale;
-      'api::carousel.carousel': ApiCarouselCarousel;
       'api::category.category': ApiCategoryCategory;
       'api::image.image': ApiImageImage;
       'api::item.item': ApiItemItem;

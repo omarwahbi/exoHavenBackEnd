@@ -17,8 +17,12 @@
     },
     "category": {
       "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::category.category"
+      "relation": "manyToOne",
+      "target": "api::category.category",
+      "inversedBy": "sub_categories"
+    },
+    "subcategory_img": {
+      "type": "string"
     }
   }
 }

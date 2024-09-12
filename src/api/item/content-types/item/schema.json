@@ -39,6 +39,13 @@
       "relation": "oneToMany",
       "target": "api::image.image",
       "mappedBy": "item"
+    },
+    "new_arrival": {
+      "type": "boolean"
+    },
+    "out_of_stock": {
+      "type": "boolean",
+      "default": false
     }
   }
 }
