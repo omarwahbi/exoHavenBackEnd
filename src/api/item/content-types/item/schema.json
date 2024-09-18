@@ -48,7 +48,7 @@
       "default": false
     },
     "Item_ID": {
-      "type": "biginteger"
+      "type": "string"
     }
   }
 }

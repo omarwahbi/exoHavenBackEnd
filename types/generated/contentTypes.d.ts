@@ -892,7 +892,7 @@ export interface ApiItemItem extends Schema.CollectionType {
     >;
     new_arrival: Attribute.Boolean;
     out_of_stock: Attribute.Boolean & Attribute.DefaultTo<false>;
-    Item_ID: Attribute.BigInteger;
+    Item_ID: Attribute.String;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
