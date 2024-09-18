@@ -46,6 +46,9 @@
     "out_of_stock": {
       "type": "boolean",
       "default": false
+    },
+    "Item_ID": {
+      "type": "biginteger"
     }
   }
 }
