@@ -15,9 +15,6 @@
     "name": {
       "type": "string"
     },
-    "img_url": {
-      "type": "string"
-    },
     "desc": {
       "type": "string"
     },
@@ -26,6 +23,16 @@
       "relation": "oneToMany",
       "target": "api::sub-category.sub-category",
       "mappedBy": "category"
+    },
+    "category_thumbnail": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": false
     }
   }
 }

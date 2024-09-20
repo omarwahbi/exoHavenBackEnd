@@ -801,13 +801,13 @@ export interface ApiCategoryCategory extends Schema.CollectionType {
   };
   attributes: {
     name: Attribute.String;
-    img_url: Attribute.String;
     desc: Attribute.String;
     sub_categories: Attribute.Relation<
       'api::category.category',
       'oneToMany',
       'api::sub-category.sub-category'
     >;
+    category_thumbnail: Attribute.Media;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -819,39 +819,6 @@ export interface ApiCategoryCategory extends Schema.CollectionType {
       Attribute.Private;
     updatedBy: Attribute.Relation<
       'api::category.category',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
-export interface ApiImageImage extends Schema.CollectionType {
-  collectionName: 'images';
-  info: {
-    singularName: 'image';
-    pluralName: 'images';
-    displayName: 'images';
-    description: '';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    img_url: Attribute.String;
-    name: Attribute.String;
-    item: Attribute.Relation<'api::image.image', 'manyToOne', 'api::item.item'>;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    publishedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::image.image',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::image.image',
       'oneToOne',
       'admin::user'
     > &
@@ -873,7 +840,6 @@ export interface ApiItemItem extends Schema.CollectionType {
   attributes: {
     name: Attribute.String;
     description: Attribute.Text;
-    image: Attribute.String;
     state: Attribute.String;
     sub_category: Attribute.Relation<
       'api::item.item',
@@ -885,14 +851,11 @@ export interface ApiItemItem extends Schema.CollectionType {
       'oneToOne',
       'api::category.category'
     >;
-    images: Attribute.Relation<
-      'api::item.item',
-      'oneToMany',
-      'api::image.image'
-    >;
     new_arrival: Attribute.Boolean;
     out_of_stock: Attribute.Boolean & Attribute.DefaultTo<false>;
     Item_ID: Attribute.String;
+    item_thumbnail: Attribute.Media;
+    item_images: Attribute.Media;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -921,7 +884,7 @@ export interface ApiSubCategorySubCategory extends Schema.CollectionType {
       'manyToOne',
       'api::category.category'
     >;
-    subcategory_img: Attribute.String;
+    subcategory_thumbnail: Attribute.Media;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     publishedAt: Attribute.DateTime;
@@ -959,7 +922,6 @@ declare module '@strapi/types' {
       'plugin::users-permissions.role': PluginUsersPermissionsRole;
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
       'api::category.category': ApiCategoryCategory;
-      'api::image.image': ApiImageImage;
       'api::item.item': ApiItemItem;
       'api::sub-category.sub-category': ApiSubCategorySubCategory;
     }

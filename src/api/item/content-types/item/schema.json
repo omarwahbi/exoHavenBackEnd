@@ -18,9 +18,6 @@
     "description": {
       "type": "text"
     },
-    "image": {
-      "type": "string"
-    },
     "state": {
       "type": "string"
     },
@@ -34,12 +31,6 @@
       "relation": "oneToOne",
       "target": "api::category.category"
     },
-    "images": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::image.image",
-      "mappedBy": "item"
-    },
     "new_arrival": {
       "type": "boolean"
     },
@@ -49,6 +40,28 @@
     },
     "Item_ID": {
       "type": "string"
+    },
+    "item_thumbnail": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "item_images": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }

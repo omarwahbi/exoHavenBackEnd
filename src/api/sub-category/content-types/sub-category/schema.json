@@ -21,8 +21,15 @@
       "target": "api::category.category",
       "inversedBy": "sub_categories"
     },
-    "subcategory_img": {
-      "type": "string"
+    "subcategory_thumbnail": {
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": false
     }
   }
 }
