@@ -879,11 +879,6 @@ export interface ApiSubCategorySubCategory extends Schema.CollectionType {
   };
   attributes: {
     name: Attribute.String;
-    category: Attribute.Relation<
-      'api::sub-category.sub-category',
-      'manyToOne',
-      'api::category.category'
-    >;
     subcategory_thumbnail: Attribute.Media;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;

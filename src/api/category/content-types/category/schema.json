@@ -21,18 +21,18 @@
     "sub_categories": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::sub-category.sub-category",
-      "mappedBy": "category"
+      "target": "api::sub-category.sub-category"
     },
     "category_thumbnail": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
       "allowedTypes": [
         "images",
         "files",
         "videos",
         "audios"
-      ],
-      "type": "media",
-      "multiple": false
+      ]
     }
   }
 }

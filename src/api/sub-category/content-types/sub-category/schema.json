@@ -15,12 +15,6 @@
     "name": {
       "type": "string"
     },
-    "category": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::category.category",
-      "inversedBy": "sub_categories"
-    },
     "subcategory_thumbnail": {
       "allowedTypes": [
         "images",
