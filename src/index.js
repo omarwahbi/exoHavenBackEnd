@@ -1,5 +1,7 @@
 'use strict';
 
+const { protectLegacyIds } = require('./utils/legacy-id');
+
 module.exports = {
   /**
    * An asynchronous register function that runs before
@@ -7,7 +9,9 @@ module.exports = {
    *
    * This gives you an opportunity to extend code.
    */
-  register(/*{ strapi }*/) {},
+  register({ strapi }) {
+    protectLegacyIds(strapi);
+  },
 
   /**
    * An asynchronous bootstrap function that runs before
