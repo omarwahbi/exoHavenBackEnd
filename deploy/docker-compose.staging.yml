@@ -37,7 +37,8 @@ services:
       IMAGEKIT_PRIVATE_KEY: ""
     # nginx serves it as staging-admin.exohaven-iq.com
     ports:
-      - "127.0.0.1:1338:1337"
+      # 1338 is taken by Nightscout on the server
+      - "127.0.0.1:1339:1337"
     depends_on:
       - postgres
     volumes:
