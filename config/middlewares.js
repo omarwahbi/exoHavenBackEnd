@@ -36,9 +36,11 @@ module.exports = [
   {
     name: "strapi::body",
     config: {
-      formLimit: "256mb", // modify form body
-      jsonLimit: "256mb", // modify JSON body
-      textLimit: "256mb", // modify text body
+      // Large uploads are multipart and only limited by maxFileSize below. Keep the
+      // JSON/form/text limits modest: they apply to every route, including public ones.
+      formLimit: "10mb",
+      jsonLimit: "10mb",
+      textLimit: "10mb",
       formidable: {
         maxFileSize: 200 * 1024 * 1024, // multipart data, modify here limit of uploaded file size
       },
