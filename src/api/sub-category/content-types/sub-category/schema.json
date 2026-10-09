@@ -30,6 +30,9 @@
       ],
       "type": "media",
       "multiple": false
+    },
+    "legacy_id": {
+      "type": "integer"
     }
   }
 }
