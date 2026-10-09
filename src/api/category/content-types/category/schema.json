@@ -35,7 +35,8 @@
       "multiple": false
     },
     "legacy_id": {
-      "type": "integer"
+      "type": "integer",
+      "private": true
     }
   }
 }
