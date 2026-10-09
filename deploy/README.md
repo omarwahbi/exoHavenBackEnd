@@ -83,7 +83,19 @@ network, and the backup script uses `docker exec`.
    (Production keeps `https://admin.exohaven-iq.com`). Every frontend PR preview then
    runs against staging.
 
-## 2. Releasing a new backend version
+## 2. Trying a pull request on staging
+
+Every pull request pushes `omarwahbi/exohaven-strapi:pr-<number>` (see the PR's
+"Docker image" check). To run it on staging:
+```sh
+cd ~/exohaven-staging
+sed -i 's/^STRAPI_TAG=.*/STRAPI_TAG=pr-12/' .env     # your PR number
+./refresh-staging.sh                                 # fresh copy of production + the PR's image
+```
+Frontend PR previews on Vercel already use staging. Set `STRAPI_TAG` back to `main`
+when you're done.
+
+## 3. Releasing a new backend version
 
 1. Merge the PR. Wait for the "Docker image" action to finish and note the tag
    (`sha-` + the first 7 characters of the merge commit).
