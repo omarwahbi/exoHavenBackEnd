@@ -7,7 +7,7 @@ set -eu
 
 STAGING_DIR="${STAGING_DIR:-/root/exohaven-staging}"
 BACKUP_DIR="${BACKUP_DIR:-/root/database_backups}"
-STAGING_URL="${STAGING_URL:-http://127.0.0.1:1338}"
+STAGING_URL="${STAGING_URL:-http://127.0.0.1:1339}"
 
 cd "$STAGING_DIR"
 . ./.env

@@ -11,7 +11,7 @@ merge to main ──► GitHub Actions builds omarwahbi/exohaven-strapi:sha-xxxx
   staging (~/exohaven-staging)     production (~/exohaven)
   STRAPI_TAG=main or a sha         STRAPI_TAG=sha-xxxxxxx (pinned)
   DB rebuilt nightly from backup   real DB
-  127.0.0.1:1338                   127.0.0.1:1337
+  127.0.0.1:1339                   127.0.0.1:1337
   staging-admin.exohaven-iq.com    admin.exohaven-iq.com
 ```
 
@@ -69,7 +69,7 @@ network, and the backup script uses `docker exec`.
 3. First run: `./refresh-staging.sh`. It restores the newest backup and ends with
    `staging OK: N published items`.
 4. nginx: add a server block for `staging-admin.exohaven-iq.com` that proxies to
-   `http://127.0.0.1:1338`, the same way the `admin` block proxies to 1337, and issue
+   `http://127.0.0.1:1339`, the same way the `admin` block proxies to 1337, and issue
    its certificate with acme.sh like the existing one.
 5. Cron (`crontab -e`): make the shop backup daily and refresh staging after it:
    ```
