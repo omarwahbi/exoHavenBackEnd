@@ -5,7 +5,7 @@ module.exports = ({ env }) => ({
   ...(env("IMAGEKIT_PRIVATE_KEY") && {
     upload: {
       config: {
-        provider: "strapi-provider-upload-imagekit",
+        provider: "strapi-provider-upload-exohaven-imagekit", // providers/ in this repo
         providerOptions: {
           publicKey: env("IMAGEKIT_PUBLIC_KEY"),
           privateKey: env("IMAGEKIT_PRIVATE_KEY"),

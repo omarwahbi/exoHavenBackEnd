@@ -1,0 +1,10 @@
+{
+  "name": "strapi-provider-upload-exohaven-imagekit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Uploads Strapi media to ImageKit",
+  "main": "index.js",
+  "dependencies": {
+    "imagekit": "5.0.0"
+  }
+}
