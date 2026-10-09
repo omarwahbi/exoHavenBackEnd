@@ -1,0 +1,50 @@
+# Production stack. Lives on the server as ~/exohaven/docker-compose.yml, next to:
+#   .env            secrets (see .env.production.example; chmod 600)
+#   postgres_data/  database files
+#   exohavenStrapi/public/uploads/
+# Deploy a new backend version by setting STRAPI_TAG in .env to the image tag that
+# GitHub Actions pushed (sha-xxxxxxx), then: docker compose up -d strapi
+name: exohaven
+
+services:
+  postgres:
+    container_name: exohaven-postgres
+    image: postgres:14.5-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    # No published port: Strapi reaches Postgres over the Docker network and the
+    # backup script uses `docker exec`.
+    networks:
+      - exohaven-network
+    restart: unless-stopped
+
+  strapi:
+    container_name: exohaven-strapi
+    image: omarwahbi/exohaven-strapi:${STRAPI_TAG:?set STRAPI_TAG in .env}
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1337
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_SSL: "false"
+      NODE_ENV: production
+    # Only reachable from the server itself; nginx serves it as admin.exohaven-iq.com.
+    ports:
+      - "127.0.0.1:1337:1337"
+    depends_on:
+      - postgres
+    volumes:
+      - ./exohavenStrapi/public/uploads:/opt/app/public/uploads
+    networks:
+      - exohaven-network
+    restart: unless-stopped
+
+networks:
+  exohaven-network:
+    driver: bridge

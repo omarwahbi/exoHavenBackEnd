@@ -1,0 +1,51 @@
+# Staging stack: a copy of production rebuilt nightly from the latest backup by
+# refresh-staging.sh. Lives on the server as ~/exohaven-staging/docker-compose.yml
+# next to its own .env (see .env.staging.example). Fully separate from production:
+# own project, database, secrets and port.
+name: exohaven-staging
+
+services:
+  postgres:
+    container_name: exohaven-staging-postgres
+    image: postgres:14.5-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    networks:
+      - staging-network
+    restart: unless-stopped
+
+  strapi:
+    container_name: exohaven-staging-strapi
+    image: omarwahbi/exohaven-strapi:${STRAPI_TAG:-main}
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 1337
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_SSL: "false"
+      NODE_ENV: production
+      # Never give staging the ImageKit keys: its database is a copy of production's,
+      # so deleting media here would delete production's files from ImageKit.
+      # Without them, new uploads are stored locally in ./uploads.
+      IMAGEKIT_PUBLIC_KEY: ""
+      IMAGEKIT_PRIVATE_KEY: ""
+    # nginx serves it as staging-admin.exohaven-iq.com
+    ports:
+      - "127.0.0.1:1338:1337"
+    depends_on:
+      - postgres
+    volumes:
+      - ./uploads:/opt/app/public/uploads
+    networks:
+      - staging-network
+    restart: unless-stopped
+
+networks:
+  staging-network:
+    driver: bridge
