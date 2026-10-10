@@ -1,6 +1,26 @@
 'use strict';
 
 const ITEM = 'api::item.item';
+const SALE = 'api::sale.sale';
+
+// The sale that was hard-coded in the frontend until it moved to the admin.
+const INITIAL_SALE = { active: true, percent: 10, ends_at: '2026-12-31T23:59:59+03:00' };
+
+// The shop reads the sale settings without logging in.
+const allowPublicSaleRead = async (strapi) => {
+  const role = await strapi.db.query('plugin::users-permissions.role').findOne({ where: { type: 'public' } });
+  if (!role) return;
+  const action = `${SALE}.find`;
+  const permissions = strapi.db.query('plugin::users-permissions.permission');
+  if (!(await permissions.findOne({ where: { action, role: role.id } }))) {
+    await permissions.create({ data: { action, role: role.id } });
+  }
+};
+
+const createSaleSettings = async (strapi) => {
+  const sale = strapi.documents(SALE);
+  if (!(await sale.findFirst())) await sale.create({ data: INITIAL_SALE });
+};
 
 // In the item edit view, category and sub-category are edited through
 // category_picker; the relations themselves and legacy_id stay out of the form.
@@ -25,5 +45,7 @@ const configureItemEditView = async (strapi) => {
 };
 
 module.exports = async ({ strapi }) => {
+  await allowPublicSaleRead(strapi);
+  await createSaleSettings(strapi);
   await configureItemEditView(strapi);
 };
