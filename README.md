@@ -87,3 +87,22 @@ redirect.
   hand.
 - `deploy/` holds the production and staging compose files, the staging refresh
   script, and the runbook.
+
+## AI agents (MCP)
+
+Strapi 5 has a built-in MCP server, so an AI agent such as Claude can read and edit
+the catalogue (bulk-fix categories, write descriptions, find items without
+thumbnails). It is off by default. To turn it on:
+
+1. Set `MCP_ENABLED=true` in the server's `.env` and restart Strapi.
+2. In the admin, go to Settings → Admin tokens, and create a token. Give it the
+   least access the job needs, and an expiry date.
+3. Point the agent at `https://admin.exohaven-iq.com/mcp` with that token as a
+   `Bearer` token.
+
+The agent can do everything the token's owner can, including the validation
+rules above, so try it on staging first. Content API tokens don't work for /mcp.
+
+Strapi's other built-in AI (the Content-Type Builder assistant, AI translations)
+needs a paid Growth plan, so it isn't used here.
+
