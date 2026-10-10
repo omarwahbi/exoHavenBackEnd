@@ -58,6 +58,13 @@ const configureItemEditView = async (strapi) => {
 // default label (the field name) are changed, so renames made in the admin's
 // "Configure the view" stay.
 const FIELD_LABELS = {
+  'shop.variant': {
+    label: ['Label', 'What the shopper picks, e.g. "50W" or "Large".'],
+    price: ['Price (IQD)', 'Before any sale discount.'],
+    sku: ['SKU', ''],
+    out_of_stock: ['Out of stock', ''],
+    low_stock: ['Last piece / low stock', 'Shows "آخر قطعة" when this variant is chosen.'],
+  },
   [SALE]: {
     active: ['Sale on', 'Turn the discount on or off for the whole shop.'],
     percent: ['Discount (%)', 'Taken off every product price while the sale is on.'],
@@ -72,16 +79,24 @@ const FIELD_LABELS = {
     Item_ID: ['SKU', 'Your own product code.'],
     new_arrival: ['New arrival', 'Listed under "وصل حديثاً" on the home page.'],
     out_of_stock: ['Out of stock', ''],
+    low_stock: ['Last piece / low stock', 'Shows "آخر قطعة" on the shop, to encourage ordering soon.'],
+    variants: [
+      'Variants',
+      'Optional: sizes, wattages or models, each with its own price. When there are variants, their prices replace the price above.',
+    ],
     item_thumbnail: ['Thumbnail', 'Required to publish.'],
     item_images: ['Images', ''],
   },
 };
 
 const labelFields = async (strapi) => {
-  const contentTypes = strapi.plugin('content-manager').service('content-types');
+  const contentManager = strapi.plugin('content-manager');
   for (const [uid, labels] of Object.entries(FIELD_LABELS)) {
-    const contentType = contentTypes.findContentType(uid);
-    const config = await contentTypes.findConfiguration(contentType);
+    // Components (the variant editor) have their own configuration service.
+    const isComponent = !uid.includes('::');
+    const service = contentManager.service(isComponent ? 'components' : 'content-types');
+    const contentType = isComponent ? service.findComponent(uid) : service.findContentType(uid);
+    const config = await service.findConfiguration(contentType);
     let changed = false;
     for (const [field, [label, description]] of Object.entries(labels)) {
       const edit = config.metadatas?.[field]?.edit;
@@ -92,7 +107,7 @@ const labelFields = async (strapi) => {
       };
       changed = true;
     }
-    if (changed) await contentTypes.updateConfiguration(contentType, config);
+    if (changed) await service.updateConfiguration(contentType, config);
   }
 };
 

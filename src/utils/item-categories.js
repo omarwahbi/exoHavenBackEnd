@@ -38,6 +38,19 @@ const checkPair = async (strapi, categoryId, subCategoryId) => {
   }
 };
 
+// Variant labels name what the shopper picks ("50W", "Large") and identify the
+// variant in the cart, so an item can't have two with the same label.
+const checkVariantLabels = (variants) => {
+  const seen = new Set();
+  for (const variant of variants || []) {
+    const shown = String(variant?.label ?? '').trim();
+    const label = shown.toLowerCase();
+    if (!label) fail('Every variant needs a label.');
+    if (seen.has(label)) fail(`Two variants are labelled "${shown}". Each label must be different.`);
+    seen.add(label);
+  }
+};
+
 // Duplicating an item in the admin is a clone with the edited form as its data.
 const WRITE_ACTIONS = ['create', 'update', 'clone'];
 
@@ -68,6 +81,8 @@ const syncItemCategories = (strapi) => {
     const relationsGiven =
       writes && !pickerGiven && (ctx.params.data.category !== undefined || ctx.params.data.sub_category !== undefined);
 
+    if (writes && Array.isArray(ctx.params.data.variants)) checkVariantLabels(ctx.params.data.variants);
+
     // From the admin: the picker decides the relations.
     if (pickerGiven) {
       const picker = ctx.params.data.category_picker || {};
@@ -91,6 +106,7 @@ const syncItemCategories = (strapi) => {
           category: { fields: ['documentId'] },
           sub_category: { fields: ['documentId'] },
           item_thumbnail: { fields: ['id'] },
+          variants: true,
         },
       });
       if (draft) {
@@ -100,6 +116,7 @@ const syncItemCategories = (strapi) => {
           fail('Choose a category and a sub-category before publishing.');
         }
         await checkPair(strapi, draft.category.documentId, draft.sub_category.documentId);
+        checkVariantLabels(draft.variants);
       }
     }
 

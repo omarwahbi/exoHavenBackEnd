@@ -83,6 +83,25 @@ network, and the backup script uses `docker exec`.
    (Production keeps `https://admin.exohaven-iq.com`). Every frontend PR preview then
    runs against staging.
 
+### Search (Meilisearch)
+Production and staging each run a `meilisearch` container next to Strapi (see the
+compose files). Once, on each of them, before deploying the first image with
+search:
+1. Add `MEILISEARCH_KEY=<value>` to the stack's `.env`, with a new value from
+   `openssl rand -base64 32` (a different one for staging).
+2. Copy the updated compose file from this folder over the stack's
+   `docker-compose.yml`.
+3. `docker compose up -d` (production) or `./refresh-staging.sh` (staging).
+
+The logs then show `Search: indexed N items`. The index lives in `meili_data/` and
+is rebuilt from the database on every Strapi start, so it needs no backup. If
+Meilisearch is down, the shop's search falls back to the database, and the index
+is rebuilt once it is back.
+
+To upgrade Meilisearch, change its image tag in the compose file, delete
+`meili_data/` (a new version may refuse the old files) and `docker compose up -d`;
+then restart Strapi so it rebuilds the index: `docker compose restart strapi`.
+
 ## 2. Trying a pull request on staging
 
 Every pull request pushes `omarwahbi/exohaven-strapi:pr-<number>` (see the PR's
