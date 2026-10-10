@@ -31,13 +31,27 @@ nothing you do can touch the live site's images.
 
 ## Content model
 
-All three types use draft & publish. The frontend only sees published entries.
+Categories, sub-categories and items use draft & publish. The frontend only sees
+published entries.
 
 | Type | Fields | Relations |
 | --- | --- | --- |
 | `category` | `name`, `desc`, `category_thumbnail` | has many `sub_categories` |
 | `sub-category` | `name`, `subcategory_thumbnail` | belongs to one `category` |
-| `item` | `name`, `description`, `state`, `Item_ID`, `new_arrival`, `out_of_stock`, `item_thumbnail`, `item_images` | one `category`, one `sub_category` |
+| `item` | `name`, `description`, `state` (the price, IQD), `Item_ID`, `new_arrival`, `out_of_stock`, `item_thumbnail`, `item_images` | one `category`, one `sub_category` |
+| `sale` (single type) | `active`, `percent`, `ends_at` | |
+
+**Item categories.** In the admin, an item's category and sub-category are set
+with one picker (`category_picker`, `src/admin/components/CategoryPicker.jsx`).
+The sub-category list is disabled until a category is chosen, then lists only
+that category's sub-categories. `src/utils/item-categories.js` copies the choice
+into the `category` and `sub_category` relations, and rejects mismatched pairs.
+Publishing an item requires a thumbnail, a category and a matching
+sub-category.
+
+**Sale.** The site-wide discount the shop shows: on or off, a percentage, and an
+optional end date. The public can read it at `/api/sale`. `src/utils/bootstrap.js`
+grants that permission, and creates the entry on first start.
 
 Change content types in the admin's Content-Type Builder while running
 `npm run develop` locally, commit the generated `schema.json` changes, and ship
