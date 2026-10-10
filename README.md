@@ -29,6 +29,17 @@ gunzip -c backup.sql.gz | sed -E '/^ALTER .* OWNER TO /d' \
 Leave the ImageKit keys unset locally: uploads then go to `public/uploads`, and
 nothing you do can touch the live site's images.
 
+## Checks
+
+```sh
+npm run lint   # ESLint on the server code
+npm test       # unit tests (node --test, tests/*.test.js)
+```
+
+GitHub Actions runs both on every pull request, before it builds the Docker image.
+Business rules (the item picker and publish checks, legacy ids) have tests in
+`tests/`; add one when you add a rule.
+
 ## Content model
 
 Categories, sub-categories and items use draft & publish. The frontend only sees
@@ -39,7 +50,7 @@ published entries.
 | `category` | `name`, `desc`, `category_thumbnail` | has many `sub_categories` |
 | `sub-category` | `name`, `subcategory_thumbnail` | belongs to one `category` |
 | `item` | `name`, `description`, `state` (the price, IQD), `Item_ID`, `new_arrival`, `out_of_stock`, `item_thumbnail`, `item_images` | one `category`, one `sub_category` |
-| `sale` (single type) | `active`, `percent`, `ends_at` | |
+| `sale` (single type) | `active`, `percent`, `ends_at`, `show_banner`, `banner_text` | |
 
 **Item categories.** In the admin, an item's category and sub-category are set
 with one picker (`category_picker`, `src/admin/components/CategoryPicker.jsx`).
@@ -49,8 +60,9 @@ into the `category` and `sub_category` relations, and rejects mismatched pairs.
 Publishing an item requires a thumbnail, a category and a matching
 sub-category.
 
-**Sale.** The site-wide discount the shop shows: on or off, a percentage, and an
-optional end date. The public can read it at `/api/sale`. `src/utils/bootstrap.js`
+**Sale.** The site-wide discount the shop shows: on or off, a percentage, an
+optional end date, and the banner across the top of the site (shown or not, and
+its text; the "خصم N%" badge next to it follows the percentage). The public can read it at `/api/sale`. `src/utils/bootstrap.js`
 grants that permission, and creates the entry on first start.
 
 Change content types in the admin's Content-Type Builder while running

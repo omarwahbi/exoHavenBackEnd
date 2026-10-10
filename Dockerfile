@@ -10,6 +10,8 @@ RUN npm ci
 COPY . .
 ENV NODE_ENV=production
 RUN npm run build
+# Dev tools (eslint) aren't needed at runtime.
+RUN npm prune --omit=dev
 
 FROM node:22-alpine
 # Only the libvips runtime libraries are needed to run sharp
