@@ -1,6 +1,5 @@
 module.exports = [
   "strapi::logger",
-  "global::v4-response-format",
   "strapi::errors",
   {
     name: "strapi::security",

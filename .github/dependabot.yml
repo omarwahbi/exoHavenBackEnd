@@ -1,0 +1,23 @@
+# Weekly pull requests for dependency updates. Each one runs CI, and its
+# pr-<number> image can be tried on staging like any other PR.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Strapi's packages must stay on the same version.
+      strapi:
+        patterns: ["@strapi/*"]
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Major upgrades are done deliberately, not by a bot.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

@@ -1,63 +1,120 @@
 # ExoHaven backend (Strapi)
 
-Strapi CMS behind https://admin.exohaven-iq.com, serving the catalogue to the
-ExoHaven frontend. Deploying, staging and rollback: see [deploy/README.md](deploy/README.md).
+Strapi 5 CMS behind https://admin.exohaven-iq.com, serving the catalogue to the
+ExoHaven frontend (omarwahbi/exoHavenFront, deployed on Vercel). Deploying,
+staging and rollback: see [deploy/README.md](deploy/README.md).
 
-# 🚀 Getting started with Strapi
+## Running it locally
 
-Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
+Needs Node 22 (`.nvmrc`) and Docker for Postgres.
 
-### `develop`
-
-Start your Strapi application with autoReload enabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-develop)
-
-```
-npm run develop
-# or
-yarn develop
-```
-
-### `start`
-
-Start your Strapi application with autoReload disabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-start)
-
-```
-npm run start
-# or
-yarn start
+```sh
+docker run -d --name exohaven-pg -p 127.0.0.1:5432:5432 \
+  -e POSTGRES_DB=strapi_db -e POSTGRES_USER=strapi_user -e POSTGRES_PASSWORD=strapi \
+  postgres:14.5-alpine
+cp .env.example .env        # set POSTGRES_PASSWORD=strapi, fill the secrets:
+                            # openssl rand -base64 32
+npm ci
+npm run develop             # admin at http://localhost:1337/admin
 ```
 
-### `build`
+To work on real data, restore a backup into that container (the `sed` drops
+ownership statements for users that don't exist locally):
 
-Build your admin panel. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-build)
-
-```
-npm run build
-# or
-yarn build
+```sh
+gunzip -c backup.sql.gz | sed -E '/^ALTER .* OWNER TO /d' \
+  | docker exec -i exohaven-pg psql -U strapi_user -d strapi_db -q
 ```
 
-## ⚙️ Deployment
+Leave the ImageKit keys unset locally: uploads then go to `public/uploads`, and
+nothing you do can touch the live site's images.
 
-Strapi gives you many possible deployment options for your project including [Strapi Cloud](https://cloud.strapi.io). Browse the [deployment section of the documentation](https://docs.strapi.io/dev-docs/deployment) to find the best solution for your use case.
+## Checks
 
-## 📚 Learn more
+```sh
+npm run lint   # ESLint on the server code
+npm test       # unit tests (node --test, tests/*.test.js)
+```
 
-- [Resource center](https://strapi.io/resource-center) - Strapi resource center.
-- [Strapi documentation](https://docs.strapi.io) - Official Strapi documentation.
-- [Strapi tutorials](https://strapi.io/tutorials) - List of tutorials made by the core team and the community.
-- [Strapi blog](https://strapi.io/blog) - Official Strapi blog containing articles made by the Strapi team and the community.
-- [Changelog](https://strapi.io/changelog) - Find out about the Strapi product updates, new features and general improvements.
+GitHub Actions runs both on every pull request, before it builds the Docker image.
+Business rules (the item picker and publish checks, legacy ids) have tests in
+`tests/`; add one when you add a rule.
 
-Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/strapi). Your feedback and contributions are welcome!
+## Content model
 
-## ✨ Community
+Categories, sub-categories and items use draft & publish. The frontend only sees
+published entries.
 
-- [Discord](https://discord.strapi.io) - Come chat with the Strapi community including the core team.
-- [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
-- [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
+| Type | Fields | Relations |
+| --- | --- | --- |
+| `category` | `name`, `desc`, `category_thumbnail` | has many `sub_categories` |
+| `sub-category` | `name`, `subcategory_thumbnail` | belongs to one `category` |
+| `item` | `name`, `description`, `state` (the price, IQD), `Item_ID`, `new_arrival`, `out_of_stock`, `item_thumbnail`, `item_images` | one `category`, one `sub_category` |
+| `sale` (single type) | `active`, `percent`, `ends_at`, `show_banner`, `banner_text` | |
 
----
+**Item categories.** In the admin, an item's category and sub-category are set
+with one picker (`category_picker`, `src/admin/components/CategoryPicker.jsx`).
+The sub-category list is disabled until a category is chosen, then lists only
+that category's sub-categories. `src/utils/item-categories.js` copies the choice
+into the `category` and `sub_category` relations, and rejects mismatched pairs.
+Publishing an item requires a thumbnail, a category and a matching
+sub-category.
 
-<sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
-# exoHavenBackEnd
+**Sale.** The site-wide discount the shop shows: on or off, a percentage, an
+optional end date, and the banner across the top of the site (shown or not, and
+its text; the "خصم N%" badge next to it follows the percentage). The public can read it at `/api/sale`. `src/utils/bootstrap.js`
+grants that permission, and creates the entry on first start.
+
+Change content types in the admin's Content-Type Builder while running
+`npm run develop` locally, commit the generated `schema.json` changes, and ship
+them through a pull request. Production runs `strapi start`, where the builder is
+read-only.
+
+### Ids and old links
+
+Strapi 5 addresses entries by `documentId` (a string). The frontend links use it.
+Links from before the upgrade used the numeric Strapi 4 id, which Strapi 5
+changes on every publish. To keep those links working, each type has a private
+`legacy_id` field:
+
+- `database/migrations/…add-legacy-ids.js` filled it with the Strapi 4 ids;
+- `src/utils/legacy-id.js` makes `GET /api/<type>/<number>` look an entry up by
+  `legacy_id` first, and stops `legacy_id` from being set or changed through
+  the API or admin (new entries get none).
+
+The frontend turns old `/item/<number>` URLs into `documentId` URLs with a 308
+redirect.
+
+## Layout
+
+- `config/` holds Strapi config: database, middlewares (CSP, CORS, body limits),
+  and plugins (ImageKit upload, only when its keys are set).
+- `src/api/` holds the three content types. Controllers, routes and services are
+  Strapi defaults, apart from the `legacy_id` lookup.
+- `providers/strapi-provider-upload-exohaven-imagekit/` is the ImageKit upload
+  provider, kept in the repo.
+- `database/migrations/` holds the project's database migrations. They run on
+  startup, before Strapi's own.
+- `types/generated/` is regenerated by Strapi from the schemas. Don't edit it by
+  hand.
+- `deploy/` holds the production and staging compose files, the staging refresh
+  script, and the runbook.
+
+## AI agents (MCP)
+
+Strapi 5 has a built-in MCP server, so an AI agent such as Claude can read and edit
+the catalogue (bulk-fix categories, write descriptions, find items without
+thumbnails). It is off by default. To turn it on:
+
+1. Set `MCP_ENABLED=true` in the server's `.env` and restart Strapi.
+2. In the admin, go to Settings → Admin tokens, and create a token. Give it the
+   least access the job needs, and an expiry date.
+3. Point the agent at `https://admin.exohaven-iq.com/mcp` with that token as a
+   `Bearer` token.
+
+The agent can do everything the token's owner can, including the validation
+rules above, so try it on staging first. Content API tokens don't work for /mcp.
+
+Strapi's other built-in AI (the Content-Type Builder assistant, AI translations)
+needs a paid Growth plan, so it isn't used here.
+

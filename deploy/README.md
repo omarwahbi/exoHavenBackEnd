@@ -28,7 +28,7 @@ built by hand.
    `DOCKERHUB_USERNAME` (`omarwahbi`) and `DOCKERHUB_TOKEN` (the token).
 
 Every merge to `main` then pushes `omarwahbi/exohaven-strapi:sha-<commit>` and
-`:main`. Pull requests only build the image (nothing is pushed), so a broken
+`:main`, and every pull request pushes `:pr-<number>` (see section 2). A broken
 Dockerfile shows up as a red check on the PR.
 
 ### Production: move to the compose file in this folder
@@ -86,7 +86,7 @@ network, and the backup script uses `docker exec`.
 ## 2. Trying a pull request on staging
 
 Every pull request pushes `omarwahbi/exohaven-strapi:pr-<number>` (see the PR's
-"Docker image" check). To run it on staging:
+"CI and Docker image" checks). To run it on staging:
 ```sh
 cd ~/exohaven-staging
 sed -i 's/^STRAPI_TAG=.*/STRAPI_TAG=pr-12/' .env     # your PR number
@@ -97,7 +97,7 @@ when you're done.
 
 ## 3. Releasing a new backend version
 
-1. Merge the PR. Wait for the "Docker image" action to finish and note the tag
+1. Merge the PR. Wait for the "CI and Docker image" action to finish and note the tag
    (`sha-` + the first 7 characters of the merge commit).
 2. Staging: set `STRAPI_TAG=sha-xxxxxxx` in `~/exohaven-staging/.env` and run
    `./refresh-staging.sh`. Click through the admin and a frontend preview.

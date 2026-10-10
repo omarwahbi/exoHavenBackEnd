@@ -1,0 +1,40 @@
+{
+  "kind": "singleType",
+  "collectionName": "sales",
+  "info": {
+    "singularName": "sale",
+    "pluralName": "sales",
+    "displayName": "Sale",
+    "description": "The site-wide discount shown on the shop"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "active": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "percent": {
+      "type": "integer",
+      "min": 1,
+      "max": 90,
+      "default": 10,
+      "required": true
+    },
+    "ends_at": {
+      "type": "datetime"
+    },
+    "show_banner": {
+      "type": "boolean",
+      "default": true
+    },
+    "banner_text": {
+      "type": "string",
+      "maxLength": 120,
+      "default": "على جميع المنتجات عند الطلب من الموقع"
+    }
+  }
+}
