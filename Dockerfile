@@ -4,6 +4,8 @@ FROM node:22-alpine AS build
 RUN apk add --no-cache build-base gcc zlib-dev libpng-dev vips-dev
 WORKDIR /opt/app
 COPY package.json package-lock.json ./
+# local packages referenced from package.json (file:providers/...)
+COPY providers ./providers
 RUN npm ci
 COPY . .
 ENV NODE_ENV=production

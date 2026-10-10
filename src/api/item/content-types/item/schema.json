@@ -62,6 +62,10 @@
         "videos",
         "audios"
       ]
+    },
+    "legacy_id": {
+      "type": "integer",
+      "private": true
     }
   }
 }
