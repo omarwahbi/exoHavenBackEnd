@@ -86,7 +86,10 @@ const labelFields = async (strapi) => {
     for (const [field, [label, description]] of Object.entries(labels)) {
       const edit = config.metadatas?.[field]?.edit;
       if (!edit || edit.label !== field) continue;
-      config.metadatas[field] = { ...config.metadatas[field], edit: { ...edit, label, description } };
+      config.metadatas[field] = {
+        ...config.metadatas[field],
+        edit: { ...edit, label, description: edit.description || description },
+      };
       changed = true;
     }
     if (changed) await contentTypes.updateConfiguration(contentType, config);
