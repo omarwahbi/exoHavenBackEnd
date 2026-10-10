@@ -17,9 +17,13 @@ const allowPublicSaleRead = async (strapi) => {
   }
 };
 
+// Only once: if someone later deletes the entry, that means no sale, not the old one.
 const createSaleSettings = async (strapi) => {
+  const flag = { type: 'core', name: 'exohaven_sale_created' };
+  if (await strapi.store.get(flag)) return;
   const sale = strapi.documents(SALE);
   if (!(await sale.findFirst())) await sale.create({ data: INITIAL_SALE });
+  await strapi.store.set({ ...flag, value: true });
 };
 
 // In the item edit view, category and sub-category are edited through

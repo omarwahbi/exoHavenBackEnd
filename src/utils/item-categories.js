@@ -38,11 +38,38 @@ const checkPair = async (strapi, categoryId, subCategoryId) => {
   }
 };
 
+// Duplicating an item in the admin is a clone with the edited form as its data.
+const WRITE_ACTIONS = ['create', 'update', 'clone'];
+
+const syncPickerFromRelations = async (strapi, documentId) => {
+  const draft = await strapi.documents(ITEM).findOne({
+    documentId,
+    fields: ['id'],
+    populate: { category: { fields: ['documentId'] }, sub_category: { fields: ['documentId'] } },
+  });
+  if (!draft) return;
+  await strapi.db.query(ITEM).update({
+    where: { id: draft.id },
+    data: {
+      category_picker: {
+        category: draft.category?.documentId ?? null,
+        sub_category: draft.sub_category?.documentId ?? null,
+      },
+    },
+  });
+};
+
 const syncItemCategories = (strapi) => {
   strapi.documents.use(async (ctx, next) => {
     if (ctx.uid !== ITEM) return next();
 
-    if ((ctx.action === 'create' || ctx.action === 'update') && ctx.params?.data?.category_picker !== undefined) {
+    const writes = WRITE_ACTIONS.includes(ctx.action) && ctx.params?.data;
+    const pickerGiven = writes && ctx.params.data.category_picker !== undefined;
+    const relationsGiven =
+      writes && !pickerGiven && (ctx.params.data.category !== undefined || ctx.params.data.sub_category !== undefined);
+
+    // From the admin: the picker decides the relations.
+    if (pickerGiven) {
       const picker = ctx.params.data.category_picker || {};
       const category = picker.category || null;
       const subCategory = picker.sub_category || null;
@@ -76,7 +103,15 @@ const syncItemCategories = (strapi) => {
       }
     }
 
-    return next();
+    const result = await next();
+
+    // From the API or MCP, the relations were set directly: copy them into the
+    // picker, so the admin shows them and its next save doesn't put the old ones
+    // back. (The pair is checked when the item is published.)
+    if (relationsGiven && result?.documentId) {
+      await syncPickerFromRelations(strapi, result.documentId);
+    }
+    return result;
   });
 };
 
