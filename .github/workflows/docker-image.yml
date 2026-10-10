@@ -19,8 +19,8 @@ permissions:
 
 env:
   IMAGE: omarwahbi/exohaven-strapi
-  # Fork PRs get no secrets, so they can only build.
-  PUSH: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+  # Fork PRs and Dependabot PRs get no secrets, so they can only build.
+  PUSH: ${{ github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
 
 jobs:
   test:
