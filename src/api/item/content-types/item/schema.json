@@ -43,6 +43,10 @@
       "type": "boolean",
       "default": false
     },
+    "low_stock": {
+      "type": "boolean",
+      "default": false
+    },
     "Item_ID": {
       "type": "string"
     },
@@ -67,6 +71,11 @@
         "videos",
         "audios"
       ]
+    },
+    "variants": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shop.variant"
     },
     "legacy_id": {
       "type": "integer",

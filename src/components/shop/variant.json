@@ -1,0 +1,32 @@
+{
+  "collectionName": "components_shop_variants",
+  "info": {
+    "displayName": "Variant",
+    "icon": "layer",
+    "description": "One version of a product (a size, a wattage, a model) with its own price"
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "maxLength": 60
+    },
+    "price": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "sku": {
+      "type": "string"
+    },
+    "out_of_stock": {
+      "type": "boolean",
+      "default": false
+    },
+    "low_stock": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

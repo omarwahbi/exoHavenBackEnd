@@ -49,7 +49,7 @@ published entries.
 | --- | --- | --- |
 | `category` | `name`, `desc`, `category_thumbnail` | has many `sub_categories` |
 | `sub-category` | `name`, `subcategory_thumbnail` | belongs to one `category` |
-| `item` | `name`, `description`, `state` (the price, IQD), `Item_ID`, `new_arrival`, `out_of_stock`, `item_thumbnail`, `item_images` | one `category`, one `sub_category` |
+| `item` | `name`, `description`, `state` (the price, IQD), `Item_ID`, `new_arrival`, `out_of_stock`, `low_stock`, `item_thumbnail`, `item_images`, `variants` | one `category`, one `sub_category` |
 | `sale` (single type) | `active`, `percent`, `ends_at`, `show_banner`, `banner_text` | |
 
 **Item categories.** In the admin, an item's category and sub-category are set
@@ -59,6 +59,13 @@ that category's sub-categories. `src/utils/item-categories.js` copies the choice
 into the `category` and `sub_category` relations, and rejects mismatched pairs.
 Publishing an item requires a thumbnail, a category and a matching
 sub-category.
+
+**Variants.** An item can have variants (the repeatable `shop.variant` component,
+`src/components/shop/variant.json`): a label such as "50W" or "Large", its own
+price, an SKU, and out-of-stock / low-stock switches. When an item has variants,
+the shop prices it by variant and the shopper picks one. Labels must be unique
+within an item, because the cart tells variants apart by label.
+`low_stock`, on an item or a variant, shows a "last piece" badge on the shop.
 
 **Sale.** The site-wide discount the shop shows: on or off, a percentage, an
 optional end date, and the banner across the top of the site (shown or not, and

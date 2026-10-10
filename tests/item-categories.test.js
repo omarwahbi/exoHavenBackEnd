@@ -119,3 +119,27 @@ test('other content types pass straight through', async () => {
   await middleware({ uid: 'api::category.category', action: 'update', params }, async () => (reached = true));
   assert.ok(reached);
 });
+
+test('two variants with the same label are rejected', async () => {
+  const { run } = fakeStrapi();
+  await assert.rejects(
+    run('update', { data: { variants: [{ label: '50W', price: 1 }, { label: ' 50w ', price: 2 }] } }),
+    /labelled "50w"/
+  );
+});
+
+test('a variant without a label is rejected', async () => {
+  const { run } = fakeStrapi();
+  await assert.rejects(run('create', { data: { variants: [{ label: '  ', price: 1 }] } }), /needs a label/);
+});
+
+test('publishing checks the variant labels too', async () => {
+  const draft = { ...complete, variants: [{ label: 'S' }, { label: 'S' }] };
+  const { run } = fakeStrapi({ item1: draft });
+  await assert.rejects(run('publish', { documentId: 'item1' }), /labelled "S"/);
+});
+
+test('distinct variant labels pass', async () => {
+  const { run } = fakeStrapi();
+  assert.ok(await run('update', { data: { variants: [{ label: '50W', price: 1 }, { label: '100W', price: 2 }] } }));
+});
