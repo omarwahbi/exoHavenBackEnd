@@ -43,9 +43,10 @@ const checkPair = async (strapi, categoryId, subCategoryId) => {
 const checkVariantLabels = (variants) => {
   const seen = new Set();
   for (const variant of variants || []) {
-    const label = String(variant?.label ?? '').trim().toLowerCase();
+    const shown = String(variant?.label ?? '').trim();
+    const label = shown.toLowerCase();
     if (!label) fail('Every variant needs a label.');
-    if (seen.has(label)) fail(`Two variants are labelled "${variant.label.trim()}". Each label must be different.`);
+    if (seen.has(label)) fail(`Two variants are labelled "${shown}". Each label must be different.`);
     seen.add(label);
   }
 };
