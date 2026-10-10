@@ -26,6 +26,15 @@
     },
     "ends_at": {
       "type": "datetime"
+    },
+    "show_banner": {
+      "type": "boolean",
+      "default": true
+    },
+    "banner_text": {
+      "type": "string",
+      "maxLength": 120,
+      "default": "على جميع المنتجات عند الطلب من الموقع"
     }
   }
 }

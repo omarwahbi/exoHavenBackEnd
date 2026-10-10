@@ -4,7 +4,13 @@ const ITEM = 'api::item.item';
 const SALE = 'api::sale.sale';
 
 // The sale that was hard-coded in the frontend until it moved to the admin.
-const INITIAL_SALE = { active: true, percent: 10, ends_at: '2026-12-31T23:59:59+03:00' };
+const INITIAL_SALE = {
+  active: true,
+  percent: 10,
+  ends_at: '2026-12-31T23:59:59+03:00',
+  show_banner: true,
+  banner_text: 'على جميع المنتجات عند الطلب من الموقع',
+};
 
 // The shop reads the sale settings without logging in.
 const allowPublicSaleRead = async (strapi) => {
@@ -48,8 +54,48 @@ const configureItemEditView = async (strapi) => {
   }
 };
 
+// Friendlier labels and hints in the admin forms. Only fields still showing their
+// default label (the field name) are changed, so renames made in the admin's
+// "Configure the view" stay.
+const FIELD_LABELS = {
+  [SALE]: {
+    active: ['Sale on', 'Turn the discount on or off for the whole shop.'],
+    percent: ['Discount (%)', 'Taken off every product price while the sale is on.'],
+    ends_at: ['Ends at', 'Optional. After this time the sale stops by itself.'],
+    show_banner: ['Show banner', 'The strip across the top of the site while the sale is on.'],
+    banner_text: ['Banner text', 'Shown next to the "خصم N%" badge.'],
+  },
+  [ITEM]: {
+    name: ['Name', ''],
+    description: ['Description', ''],
+    state: ['Price (IQD)', 'Before any sale discount.'],
+    Item_ID: ['SKU', 'Your own product code.'],
+    new_arrival: ['New arrival', 'Listed under "وصل حديثاً" on the home page.'],
+    out_of_stock: ['Out of stock', ''],
+    item_thumbnail: ['Thumbnail', 'Required to publish.'],
+    item_images: ['Images', ''],
+  },
+};
+
+const labelFields = async (strapi) => {
+  const contentTypes = strapi.plugin('content-manager').service('content-types');
+  for (const [uid, labels] of Object.entries(FIELD_LABELS)) {
+    const contentType = contentTypes.findContentType(uid);
+    const config = await contentTypes.findConfiguration(contentType);
+    let changed = false;
+    for (const [field, [label, description]] of Object.entries(labels)) {
+      const edit = config.metadatas?.[field]?.edit;
+      if (!edit || edit.label !== field) continue;
+      config.metadatas[field] = { ...config.metadatas[field], edit: { ...edit, label, description } };
+      changed = true;
+    }
+    if (changed) await contentTypes.updateConfiguration(contentType, config);
+  }
+};
+
 module.exports = async ({ strapi }) => {
   await allowPublicSaleRead(strapi);
   await createSaleSettings(strapi);
   await configureItemEditView(strapi);
+  await labelFields(strapi);
 };
