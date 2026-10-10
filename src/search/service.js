@@ -20,15 +20,15 @@ const MEILI_SORT = {
   price_desc: ['in_stock_rank:desc', 'price_min:desc'],
   name: ['in_stock_rank:desc', 'name:asc'],
 };
-// The database can't sort by variant prices or by stock across variants, so its
-// orders are close but not identical.
+// The database can't sort by variant prices or by stock across variants (and its
+// stock / new-arrival switches can be empty), so its orders are simpler.
 const DB_SORT = {
-  relevance: ['out_of_stock:asc', 'new_arrival:desc', 'createdAt:desc'],
-  featured: ['new_arrival:desc', 'out_of_stock:asc', 'createdAt:desc'],
-  newest: ['out_of_stock:asc', 'createdAt:desc'],
-  price_asc: ['out_of_stock:asc', 'state:asc'],
-  price_desc: ['out_of_stock:asc', 'state:desc'],
-  name: ['out_of_stock:asc', 'name:asc'],
+  relevance: ['createdAt:desc'],
+  featured: ['createdAt:desc'],
+  newest: ['createdAt:desc'],
+  price_asc: ['state:asc'],
+  price_desc: ['state:desc'],
+  name: ['name:asc'],
 };
 const SORTS = Object.keys(MEILI_SORT);
 
@@ -64,18 +64,21 @@ const createSearch = (strapi, env = process.env) => {
 
   const publishedItems = async function* () {
     for (let start = 0; ; start += 200) {
-      const items = await strapi.documents(ITEM).findMany({ status: 'published', populate: ITEM_POPULATE, start, limit: 200 });
+      const items = await strapi.documents(ITEM).findMany({
+        status: 'published',
+        populate: ITEM_POPULATE,
+        sort: 'id:asc',
+        start,
+        limit: 200,
+      });
       yield* items;
       if (items.length < 200) return;
     }
   };
 
   const setup = async () => {
-    try {
-      await meili.call('POST', '/indexes', { uid: INDEX, primaryKey: 'id' });
-    } catch (error) {
-      if (error.status !== 409) throw error;
-    }
+    // Both are queued tasks: creating an index that exists fails quietly in the queue.
+    await meili.call('POST', '/indexes', { uid: INDEX, primaryKey: 'id' });
     await meili.call('PATCH', meili.index('/settings'), SETTINGS);
   };
 
@@ -89,7 +92,10 @@ const createSearch = (strapi, env = process.env) => {
     const keep = new Set(docs.map((d) => d.id));
     const stale = [];
     for (let offset = 0; ; offset += 1000) {
-      const page = await meili.call('GET', meili.index(`/documents?fields=id&limit=1000&offset=${offset}`));
+      const page = await meili
+        .call('GET', meili.index(`/documents?fields=id&limit=1000&offset=${offset}`))
+        // A brand-new index may not exist yet (its creation is still queued).
+        .catch((error) => (error.status === 404 ? { results: [] } : Promise.reject(error)));
       stale.push(...page.results.map((d) => d.id).filter((id) => !keep.has(id)));
       if (page.results.length < 1000) break;
     }
@@ -97,32 +103,46 @@ const createSearch = (strapi, env = process.env) => {
     log.info(`Search: indexed ${docs.length} items, removed ${stale.length}.`);
   };
 
-  // Writes are collected for a moment, then the index catches up in the background:
-  // a failure never blocks or fails the admin's save.
+  // Writes are collected for a moment, then the index catches up in the background,
+  // one update at a time: a failure never blocks or fails the admin's save. If
+  // Meilisearch can't be reached, the whole index is rebuilt once it answers again.
   const pendingItems = new Set();
   let pendingAll = false;
   let timer = null;
+  let running = false;
+
+  const schedule = (delay = 1000) => {
+    if (!timer && !running) timer = setTimeout(flush, delay);
+  };
 
   const flush = async () => {
     timer = null;
-    const ids = [...pendingItems];
+    running = true;
     const all = pendingAll;
-    pendingItems.clear();
+    const ids = [...pendingItems];
     pendingAll = false;
+    pendingItems.clear();
+    let failed = false;
     try {
-      if (all) return await reindexAll();
-      for (const documentId of ids) {
-        const item = await strapi.documents(ITEM).findOne({ documentId, status: 'published', populate: ITEM_POPULATE });
-        if (item) await meili.call('POST', meili.index('/documents'), [toSearchDocument(item)]);
-        else await meili.call('DELETE', meili.index(`/documents/${encodeURIComponent(documentId)}`));
+      if (all) {
+        await setup();
+        await reindexAll();
+      } else {
+        for (const documentId of ids) {
+          const item = await strapi.documents(ITEM).findOne({ documentId, status: 'published', populate: ITEM_POPULATE });
+          if (item) await meili.call('POST', meili.index('/documents'), [toSearchDocument(item)]);
+          else await meili.call('DELETE', meili.index(`/documents/${encodeURIComponent(documentId)}`));
+        }
       }
     } catch (error) {
-      log.warn(`Search: could not update the index (${error.message}). It is rebuilt on the next restart.`);
+      failed = true;
+      pendingAll = true;
+      log.warn(`Search: could not update the index (${error.message}); rebuilding it in a minute.`);
+    } finally {
+      running = false;
     }
-  };
-
-  const schedule = () => {
-    if (!timer) timer = setTimeout(flush, 1000);
+    if (failed) schedule(60_000);
+    else if (pendingAll || pendingItems.size) schedule();
   };
 
   const ITEM_ACTIONS = ['create', 'update', 'delete', 'publish', 'unpublish', 'discardDraft', 'clone'];
@@ -146,15 +166,15 @@ const createSearch = (strapi, env = process.env) => {
     return result;
   };
 
-  // On startup: create or update the index, then rebuild it, in the background.
+  // On startup: create or update the index, then rebuild it, in the background
+  // (retried every minute while Meilisearch can't be reached).
   const start = () => {
     if (!meili) {
       log.info('Search: MEILISEARCH_URL is not set, searching the database instead.');
       return;
     }
-    setup()
-      .then(reindexAll)
-      .catch((error) => log.warn(`Search: Meilisearch is not reachable (${error.message}); searching the database until it is.`));
+    pendingAll = true;
+    schedule(0);
   };
 
   // ---- Searching ------------------------------------------------------------
@@ -187,7 +207,8 @@ const createSearch = (strapi, env = process.env) => {
     }
     if (o.category) filters.category = { documentId: { $eq: o.category } };
     if (o.subCategory) filters.sub_category = { documentId: { $eq: o.subCategory } };
-    if (o.inStock) filters.out_of_stock = { $eq: false };
+    // Never switched on (empty) counts as in stock.
+    if (o.inStock) filters.out_of_stock = { $ne: true };
     const docs = strapi.documents(ITEM);
     const [items, total] = await Promise.all([
       docs.findMany({
@@ -236,16 +257,21 @@ const createSearch = (strapi, env = process.env) => {
       .map(({ key, ...entry }) => entry);
   };
 
+  // After a failed search, the database answers for a while instead of every
+  // request waiting on (and logging) Meilisearch again.
+  let meiliDownUntil = 0;
+
   const search = async (query) => {
     const o = parseQuery(query);
     let engine = 'database';
     let result;
-    if (meili) {
+    if (meili && Date.now() >= meiliDownUntil) {
       try {
         result = await searchMeili(o);
         engine = 'meilisearch';
       } catch (error) {
-        log.warn(`Search: Meilisearch failed (${error.message}), using the database.`);
+        meiliDownUntil = Date.now() + 30_000;
+        log.warn(`Search: Meilisearch failed (${error.message}), using the database for 30 seconds.`);
       }
     }
     if (!result) result = await searchDatabase(o);

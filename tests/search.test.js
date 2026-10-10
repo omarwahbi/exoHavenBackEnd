@@ -16,10 +16,11 @@ test('normalize: spelling variants of the same Arabic word match', () => {
   assert.equal(normalize('مستلزمات'), 'مستلزمات');
 });
 
-test('normalize: the article is removed, a leading hamza is not mistaken for it', () => {
+test('normalize: the article is removed, with or without a hamza typed', () => {
   assert.equal(normalize('للزواحف'), 'زواحف');
   assert.equal(normalize('والطعام'), 'طعام');
-  assert.equal(normalize('ألماني'), 'الماني');
+  assert.equal(normalize('ألعاب'), normalize('العاب'));
+  assert.equal(normalize('ألماني'), normalize('الماني'));
   // Too short to carry an article
   assert.equal(normalize('الة'), 'اله');
 });

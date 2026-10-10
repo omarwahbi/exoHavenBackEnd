@@ -6,7 +6,7 @@
 // - Arabic: hamza forms of alef (أ إ آ ٱ) -> ا, ى -> ي, ة -> ه, ؤ -> و, ئ -> ي;
 //   diacritics (tashkeel) and tatweel removed; Arabic-Indic digits -> 0-9.
 // - The definite article: "الإضاءة" and "إضاءة" both become "اضاءه" ("ال", "وال",
-//   "بال", "فال", "كال" and "لل" at the start of a word longer than 4 letters).
+//   "بال", "فال", "كال" and "لل" before at least 3 more letters).
 // - Latin text is lower-cased; punctuation becomes spaces.
 
 const DIACRITICS = /[ؐ-ًؚ-ٰٟۖ-ۭـ]/g;
@@ -16,8 +16,9 @@ const ARTICLE = /^(?:[وبفك]?ال|لل)(?=[ء-ي]{3,})/;
 
 const normalizeWord = (word) => word.replace(ARTICLE, '');
 
-// The article is removed before hamza is normalized: "ألماني" starts with a
-// hamza, not with the article, and must stay as it is.
+// Hamza is normalized before the article is removed, so a word typed with or
+// without it ("ألعاب" / "العاب") ends up the same ("عاب"). Words that really start
+// with أل lose those letters too, on both sides, so they still match.
 const normalize = (text) =>
   String(text ?? '')
     .toLowerCase()
@@ -25,7 +26,7 @@ const normalize = (text) =>
     .replace(ARABIC_DIGITS, (d) => String(d.charCodeAt(0) & 0xf))
     .split(/[^\p{L}\p{N}]+/u)
     .filter(Boolean)
-    .map((word) => normalizeWord(word).replace(/[أإآٱىةؤئ]/g, (c) => LETTERS[c]))
+    .map((word) => normalizeWord(word.replace(/[أإآٱىةؤئ]/g, (c) => LETTERS[c])))
     .join(' ');
 
 module.exports = { normalize };

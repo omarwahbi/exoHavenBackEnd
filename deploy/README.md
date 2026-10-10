@@ -95,7 +95,12 @@ search:
 
 The logs then show `Search: indexed N items`. The index lives in `meili_data/` and
 is rebuilt from the database on every Strapi start, so it needs no backup. If
-Meilisearch is down, the shop's search falls back to the database.
+Meilisearch is down, the shop's search falls back to the database, and the index
+is rebuilt once it is back.
+
+To upgrade Meilisearch, change its image tag in the compose file, delete
+`meili_data/` (a new version may refuse the old files) and `docker compose up -d`;
+then restart Strapi so it rebuilds the index: `docker compose restart strapi`.
 
 ## 2. Trying a pull request on staging
 
