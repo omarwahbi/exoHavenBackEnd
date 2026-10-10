@@ -34,13 +34,31 @@ services:
       DATABASE_PORT: 5432
       DATABASE_SSL: "false"
       NODE_ENV: production
+      # Product search (src/search/). The index is rebuilt from the database each
+      # time Strapi starts, so meili_data needs no backup.
+      MEILISEARCH_URL: http://meilisearch:7700
     # Only reachable from the server itself; nginx serves it as admin.exohaven-iq.com.
     ports:
       - "127.0.0.1:1337:1337"
     depends_on:
       - postgres
+      - meilisearch
     volumes:
       - ./exohavenStrapi/public/uploads:/opt/app/public/uploads
+    networks:
+      - exohaven-network
+    restart: unless-stopped
+
+  meilisearch:
+    container_name: exohaven-meilisearch
+    image: getmeili/meilisearch:v1.15.2
+    environment:
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:?set MEILISEARCH_KEY in .env}
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - ./meili_data:/meili_data
+    # No published port: only Strapi talks to it, over the Docker network.
     networks:
       - exohaven-network
     restart: unless-stopped

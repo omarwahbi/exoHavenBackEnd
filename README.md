@@ -72,6 +72,33 @@ optional end date, and the banner across the top of the site (shown or not, and
 its text; the "خصم N%" badge next to it follows the percentage). The public can read it at `/api/sale`. `src/utils/bootstrap.js`
 grants that permission, and creates the entry on first start.
 
+## Search
+
+The shop's search box, product listings and their sorting go through
+`GET /api/search` (public; `src/search/`, `src/api/search/`). Parameters: `q`,
+`category`, `sub_category` (documentIds), `instock=1`, `sort` (`relevance`,
+`featured`, `newest`, `price_asc`, `price_desc`, `name`), `page`, `pageSize` (max
+48), and `suggest=1` to also get categories whose name matches. Results are items
+in the usual API shape, so the shop shows them with its normal product card.
+
+It uses [Meilisearch](https://www.meilisearch.com/) when `MEILISEARCH_URL` and
+`MEILISEARCH_KEY` are set (production and staging run it next to Strapi), and the
+database otherwise, or whenever Meilisearch doesn't answer. Meilisearch adds:
+
+- typo tolerance ("مصبح" finds "مصباح");
+- Arabic spelling variants: أ/إ/آ/ا, ة/ه, ى/ي, diacritics, and the article
+  ("الإضاءة" finds "إضاءة"), see `src/search/normalize.js`;
+- synonyms ("ضوء" finds "مصباح" and "lamp"), see `SYNONYM_GROUPS` in
+  `src/search/meili.js`. Add words there, in any spelling;
+- price sorting by the real price, including variants (the database sorts the
+  `state` text, so "9000" comes after "10000");
+- a match on every word typed first, then on most of them if nothing matches all.
+
+The index is rebuilt from the published items each time Strapi starts, and kept
+up to date as items, categories and sub-categories are published, edited or
+deleted. Product codes (`Item_ID`, variant SKUs) are searchable and must match
+exactly.
+
 Change content types in the admin's Content-Type Builder while running
 `npm run develop` locally, commit the generated `schema.json` changes, and ship
 them through a pull request. Production runs `strapi start`, where the builder is

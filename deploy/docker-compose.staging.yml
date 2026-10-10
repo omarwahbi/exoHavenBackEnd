@@ -30,6 +30,9 @@ services:
       DATABASE_PORT: 5432
       DATABASE_SSL: "false"
       NODE_ENV: production
+      # Product search (src/search/). The index is rebuilt from the database each
+      # time Strapi starts, so meili_data needs no backup.
+      MEILISEARCH_URL: http://meilisearch:7700
       # Never give staging the ImageKit keys: its database is a copy of production's,
       # so deleting media here would delete production's files from ImageKit.
       # Without them, new uploads are stored locally in ./uploads.
@@ -41,8 +44,23 @@ services:
       - "127.0.0.1:1339:1337"
     depends_on:
       - postgres
+      - meilisearch
     volumes:
       - ./uploads:/opt/app/public/uploads
+    networks:
+      - staging-network
+    restart: unless-stopped
+
+  meilisearch:
+    container_name: exohaven-staging-meilisearch
+    image: getmeili/meilisearch:v1.15.2
+    environment:
+      MEILI_ENV: production
+      MEILI_MASTER_KEY: ${MEILISEARCH_KEY:?set MEILISEARCH_KEY in .env}
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - ./meili_data:/meili_data
+    # No published port: only Strapi talks to it, over the Docker network.
     networks:
       - staging-network
     restart: unless-stopped

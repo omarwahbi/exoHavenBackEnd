@@ -3,6 +3,7 @@
 const { protectLegacyIds } = require('./utils/legacy-id');
 const { syncItemCategories } = require('./utils/item-categories');
 const bootstrap = require('./utils/bootstrap');
+const { getSearch } = require('./search');
 
 module.exports = {
   /**
@@ -15,6 +16,8 @@ module.exports = {
     strapi.customFields.register({ name: 'category-picker', type: 'json' });
     protectLegacyIds(strapi);
     syncItemCategories(strapi);
+    // Keeps the search index in step with published items (src/search/).
+    strapi.documents.use(getSearch(strapi).middleware);
   },
 
   /**
@@ -24,5 +27,8 @@ module.exports = {
    * This gives you an opportunity to set up your data model,
    * run jobs, or perform some special logic.
    */
-  bootstrap,
+  async bootstrap(context) {
+    await bootstrap(context);
+    getSearch(context.strapi).start();
+  },
 };
