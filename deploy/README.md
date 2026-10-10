@@ -28,7 +28,7 @@ built by hand.
    `DOCKERHUB_USERNAME` (`omarwahbi`) and `DOCKERHUB_TOKEN` (the token).
 
 Every merge to `main` then pushes `omarwahbi/exohaven-strapi:sha-<commit>` and
-`:main`. Pull requests only build the image (nothing is pushed), so a broken
+`:main`, and every pull request pushes `:pr-<number>` (see section 2). A broken
 Dockerfile shows up as a red check on the PR.
 
 ### Production: move to the compose file in this folder

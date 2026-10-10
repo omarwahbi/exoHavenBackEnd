@@ -1,8 +1,8 @@
 {
-  "name": "lizard",
+  "name": "exohaven-backend",
   "private": true,
   "version": "0.1.0",
-  "description": "A Strapi application",
+  "description": "Strapi CMS for the ExoHaven shop",
   "scripts": {
     "develop": "strapi develop",
     "start": "strapi start",
@@ -10,7 +10,6 @@
     "strapi": "strapi"
   },
   "dependencies": {
-    "@strapi/plugin-cloud": "5.57.0",
     "@strapi/plugin-users-permissions": "5.57.0",
     "@strapi/strapi": "5.57.0",
     "pg": "^8.12.0",
@@ -21,7 +20,7 @@
     "styled-components": "^6.0.0"
   },
   "author": {
-    "name": "A Strapi developer"
+    "name": "Omar Wahbi"
   },
   "strapi": {
     "uuid": "a786a698-b914-4c56-88a5-308d78971aee"
@@ -30,5 +29,5 @@
     "node": ">=20.0.0 <=24.x.x",
     "npm": ">=6.0.0"
   },
-  "license": "MIT"
+  "license": "UNLICENSED"
 }
