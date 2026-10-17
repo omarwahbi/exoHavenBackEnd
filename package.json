@@ -19,7 +19,7 @@
     "react-dom": "^18.0.0",
     "react-router-dom": "^6.0.0",
     "strapi-provider-upload-exohaven-imagekit": "file:providers/strapi-provider-upload-exohaven-imagekit",
-    "styled-components": "^6.0.0"
+    "styled-components": "^6.6.0"
   },
   "author": {
     "name": "Omar Wahbi"
