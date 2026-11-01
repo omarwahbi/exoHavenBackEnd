@@ -227,9 +227,36 @@ const createSearch = (strapi, env = process.env) => {
     // Never switched on (empty) counts as in stock.
     if (o.inStock) filters.out_of_stock = { $ne: true };
     if (o.newOnly) filters.new_arrival = { $eq: true };
-    // The database keeps prices as text, so it can't filter a price range; that
-    // filter only works through Meilisearch.
     const docs = strapi.documents(ITEM);
+
+    // The database keeps prices as text (and variant prices elsewhere), so a price
+    // range or price order is worked out here, on every match: the catalogue is a
+    // few hundred items.
+    const byPrice = o.minPrice !== null || o.maxPrice !== null || o.sort === 'price_asc' || o.sort === 'price_desc';
+    if (byPrice) {
+      const all = await docs.findMany({ status: 'published', filters, sort: DB_SORT[o.sort], populate: ITEM_POPULATE, limit: 5000 });
+      let matches = all
+        .map(toSearchDocument)
+        .filter((doc) => o.minPrice === null || (doc.price_min !== null && doc.price_min >= o.minPrice))
+        .filter((doc) => o.maxPrice === null || (doc.price_min !== null && doc.price_min <= o.maxPrice));
+      if (o.sort === 'price_asc' || o.sort === 'price_desc') {
+        const direction = o.sort === 'price_asc' ? 1 : -1;
+        // As in Meilisearch: in stock first, then by price; no price last.
+        matches = matches.sort(
+          (a, b) =>
+            b.in_stock_rank - a.in_stock_rank ||
+            (a.price_min === null) - (b.price_min === null) ||
+            direction * ((a.price_min ?? 0) - (b.price_min ?? 0))
+        );
+      }
+      const start = (o.page - 1) * o.pageSize;
+      return {
+        items: matches.slice(start, start + o.pageSize).map((doc) => pick(doc, CARD_FIELDS)),
+        total: matches.length,
+        pageCount: Math.ceil(matches.length / o.pageSize),
+      };
+    }
+
     const [items, total] = await Promise.all([
       docs.findMany({
         status: 'published',
@@ -290,8 +317,15 @@ const createSearch = (strapi, env = process.env) => {
         result = await searchMeili(o);
         engine = 'meilisearch';
       } catch (error) {
-        meiliDownUntil = Date.now() + 30_000;
-        log.warn(`Search: Meilisearch failed (${error.message}), using the database for 30 seconds.`);
+        // A refused request (4xx, e.g. a filter whose setting is still being
+        // applied after a deploy) only affects this search; an outage (no answer,
+        // 5xx) sends searches to the database for a while.
+        if (error.status && error.status < 500) {
+          log.warn(`Search: Meilisearch refused this search (${error.message}), using the database for it.`);
+        } else {
+          meiliDownUntil = Date.now() + 30_000;
+          log.warn(`Search: Meilisearch failed (${error.message}), using the database for 30 seconds.`);
+        }
       }
     }
     if (!result) result = await searchDatabase(o);
