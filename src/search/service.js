@@ -15,6 +15,8 @@ const pick = (doc, fields) => Object.fromEntries(fields.map((f) => [f, doc[f] ??
 const MEILI_SORT = {
   relevance: ['in_stock_rank:desc'],
   featured: ['in_stock_rank:desc', 'new_rank:desc', 'created_at:desc'],
+  // The products page's usual order: new arrivals, then in stock, then newest.
+  listing: ['new_rank:desc', 'in_stock_rank:desc', 'created_at:desc'],
   newest: ['in_stock_rank:desc', 'created_at:desc'],
   price_asc: ['in_stock_rank:desc', 'price_min:asc'],
   price_desc: ['in_stock_rank:desc', 'price_min:desc'],
@@ -25,6 +27,7 @@ const MEILI_SORT = {
 const DB_SORT = {
   relevance: ['createdAt:desc'],
   featured: ['createdAt:desc'],
+  listing: ['createdAt:desc'],
   newest: ['createdAt:desc'],
   price_asc: ['state:asc'],
   price_desc: ['state:desc'],
@@ -43,16 +46,26 @@ const parseQuery = (query = {}) => {
     return Number.isFinite(n) && n >= 1 ? Math.min(n, max) : fallback;
   };
   const id = (value) => (typeof value === 'string' && ID.test(value) ? value : null);
+  // A price bound in IQD (whole, 0 to 100 million), or null.
+  const price = (value) => {
+    if (value === undefined || value === null || value === '') return null;
+    const n = Number(value);
+    return Number.isInteger(n) && n >= 0 && n <= 100_000_000 ? n : null;
+  };
+  const flag = (value) => value === '1' || value === 'true';
   const sort = SORTS.includes(query.sort) ? query.sort : q ? 'relevance' : 'featured';
   return {
     q,
     category: id(query.category),
     subCategory: id(query.sub_category),
-    inStock: query.instock === '1' || query.instock === 'true',
+    inStock: flag(query.instock),
+    newOnly: flag(query.new),
+    minPrice: price(query.min_price),
+    maxPrice: price(query.max_price),
     sort,
     page: int(query.page, 1, 1000),
     pageSize: int(query.pageSize, 12, MAX_PAGE_SIZE),
-    suggest: query.suggest === '1' || query.suggest === 'true',
+    suggest: flag(query.suggest),
   };
 };
 
@@ -184,6 +197,10 @@ const createSearch = (strapi, env = process.env) => {
     if (o.category) filter.push(`category_id = "${o.category}"`);
     if (o.subCategory) filter.push(`sub_category_id = "${o.subCategory}"`);
     if (o.inStock) filter.push('in_stock = true');
+    if (o.newOnly) filter.push('new_arrival = true');
+    // Prices filter on the price a card shows ("from" for variants), before any sale.
+    if (o.minPrice !== null) filter.push(`price_min >= ${o.minPrice}`);
+    if (o.maxPrice !== null) filter.push(`price_min <= ${o.maxPrice}`);
     const run = (matchingStrategy) =>
       meili.call('POST', meili.index('/search'), {
         q: normalize(o.q),
@@ -209,6 +226,9 @@ const createSearch = (strapi, env = process.env) => {
     if (o.subCategory) filters.sub_category = { documentId: { $eq: o.subCategory } };
     // Never switched on (empty) counts as in stock.
     if (o.inStock) filters.out_of_stock = { $ne: true };
+    if (o.newOnly) filters.new_arrival = { $eq: true };
+    // The database keeps prices as text, so it can't filter a price range; that
+    // filter only works through Meilisearch.
     const docs = strapi.documents(ITEM);
     const [items, total] = await Promise.all([
       docs.findMany({

@@ -96,7 +96,8 @@ test('search document: missing optional fields', () => {
 
 test('parseQuery: defaults, clamping and rejected values', () => {
   assert.deepEqual(parseQuery({}), {
-    q: '', category: null, subCategory: null, inStock: false, sort: 'featured', page: 1, pageSize: 12, suggest: false,
+    q: '', category: null, subCategory: null, inStock: false, newOnly: false, minPrice: null, maxPrice: null,
+    sort: 'featured', page: 1, pageSize: 12, suggest: false,
   });
   const o = parseQuery({ q: ' حوض ', pageSize: '500', page: '-3', sort: 'bogus', category: 'x" OR 1=1', instock: '1' });
   assert.equal(o.q, 'حوض');
@@ -106,4 +107,18 @@ test('parseQuery: defaults, clamping and rejected values', () => {
   assert.equal(o.category, null);
   assert.equal(o.inStock, true);
   assert.equal(parseQuery({ sort: 'price_asc', sub_category: 'abc123' }).subCategory, 'abc123');
+});
+
+test('parseQuery: price bounds, new arrivals and the listing order', () => {
+  const o = parseQuery({ min_price: '5000', max_price: '25000', new: '1', sort: 'listing' });
+  assert.equal(o.minPrice, 5000);
+  assert.equal(o.maxPrice, 25000);
+  assert.equal(o.newOnly, true);
+  assert.equal(o.sort, 'listing');
+  // Bad bounds are ignored, 0 is a real bound.
+  const bad = parseQuery({ min_price: '-1', max_price: 'abc' });
+  assert.equal(bad.minPrice, null);
+  assert.equal(bad.maxPrice, null);
+  assert.equal(parseQuery({ min_price: '0' }).minPrice, 0);
+  assert.equal(parseQuery({ max_price: '1.5' }).maxPrice, null);
 });
