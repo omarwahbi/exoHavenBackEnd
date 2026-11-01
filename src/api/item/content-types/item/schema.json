@@ -37,7 +37,8 @@
       "private": true
     },
     "new_arrival": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": false
     },
     "out_of_stock": {
       "type": "boolean",

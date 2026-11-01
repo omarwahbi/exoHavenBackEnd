@@ -27,7 +27,7 @@ const MEILI_SORT = {
 const DB_SORT = {
   relevance: ['createdAt:desc'],
   featured: ['createdAt:desc'],
-  listing: ['createdAt:desc'],
+  listing: ['new_arrival:desc', 'out_of_stock:asc', 'createdAt:desc'],
   newest: ['createdAt:desc'],
   price_asc: ['state:asc'],
   price_desc: ['state:desc'],
