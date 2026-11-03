@@ -57,7 +57,7 @@ const SETTINGS = {
   rankingRules: ['sort', 'words', 'typo', 'proximity', 'attribute', 'exactness'],
   // Earlier attributes rank higher: a match in the name beats one in the description.
   searchableAttributes: ['name_n', 'variants_n', 'codes', 'category_n', 'description_n'],
-  filterableAttributes: ['category_id', 'sub_category_id', 'in_stock', 'new_arrival'],
+  filterableAttributes: ['category_id', 'sub_category_id', 'in_stock', 'new_arrival', 'price_min'],
   sortableAttributes: ['price_min', 'created_at', 'name', 'in_stock_rank', 'new_rank'],
   synonyms: synonyms(),
   // Codes and SKUs must match as typed: "T-90000" is not a typo of "T-15000".
